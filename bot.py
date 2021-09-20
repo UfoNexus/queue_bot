@@ -2,6 +2,9 @@ from telegram.ext import Updater, CommandHandler
 
 
 print('Бот запущен. Нажмите Ctrl+C для завершения')
+QUEUE_SUCCESS = 'встал в очередь'
+QUEUE_ERROR = 'Ты уже стоишь в очереди'
+QUEUE_CURRENT = 'Стоят в очереди:\n'
 
 token = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
 updater = Updater(token, use_context=True)
@@ -29,15 +32,13 @@ def get_in_queue(update, context):
                                        f'{active_truename}')
         queue_username_list.append((current_queue[queue_number])[0])
         queue_name_list.append((current_queue[queue_number])[1])
-        update.message.reply_text(f'{active_username} встал в очередь',
+        update.message.reply_text(f'{active_username} {QUEUE_SUCCESS}',
                                   quote=True)
-        update.message.reply_text('Стоят в очереди:\n'
-                                  + "\n".join(queue_name_list))
+        update.message.reply_text(QUEUE_CURRENT + "\n".join(queue_name_list))
     elif active_username in queue_username_list:
-        update.message.reply_text('Ты уже стоишь в очереди',
+        update.message.reply_text(QUEUE_ERROR,
                                   quote=True)
-        update.message.reply_text('Стоят в очереди:\n'
-                                  + "\n".join(queue_name_list))
+        update.message.reply_text(QUEUE_CURRENT + "\n".join(queue_name_list))
 
 
 dispatcher = updater.dispatcher
