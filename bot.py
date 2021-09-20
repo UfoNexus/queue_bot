@@ -17,10 +17,19 @@ def on_message(update, context):
     context.bot.send_message(chat_id=chat.id, text='Тестовый ввод')
 
 
+current_queue = {}
+
+
 def get_in_queue(update, context):
-    current_queue = {1: 'test1'}
-    update.message.reply_text(f'test\n{current_queue[1]}',
+    queue_number = len(current_queue)
+    current_queue[queue_number + 1] = f'login{queue_number+1}', f'name{queue_number+1}'
+    login, name = current_queue[1]
+    queue_login_list = [(current_queue[i])[0] for i in current_queue]
+    queue_name_list = [(current_queue[i])[1] for i in current_queue]
+    update.message.reply_text(f'{name} встал в очередь',
                               quote=True)
+    update.message.reply_text('Стоят в очереди:\n'
+                              + "\n".join(queue_name_list))
 
 
 dispatcher = updater.dispatcher
