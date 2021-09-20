@@ -1,4 +1,4 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler
 
 
 print('Бот запущен. Нажмите Ctrl+C для завершения')
@@ -10,11 +10,6 @@ updater = Updater(token, use_context=True)
 def on_start(update, context):
     chat = update.effective_chat
     context.bot.send_message(chat_id=chat.id, text='Привет, я бот очередей')
-
-
-def on_message(update, context):
-    chat = update.effective_chat
-    context.bot.send_message(chat_id=chat.id, text='Тестовый ввод')
 
 
 current_queue = {}
@@ -30,7 +25,8 @@ def get_in_queue(update, context):
     queue_name_list = [(current_queue[i])[1] for i in current_queue]
     if active_username not in queue_username_list:
         queue_number = len(current_queue) + 1
-        current_queue[queue_number] = f'{active_username}', f'{active_truename}'
+        current_queue[queue_number] = (f'{active_username}'
+                                       f'{active_truename}')
         queue_username_list.append((current_queue[queue_number])[0])
         queue_name_list.append((current_queue[queue_number])[1])
         update.message.reply_text(f'{active_username} встал в очередь',
@@ -47,7 +43,6 @@ def get_in_queue(update, context):
 dispatcher = updater.dispatcher
 dispatcher.add_handler(CommandHandler("start", on_start))
 dispatcher.add_handler(CommandHandler("get_in_queue", get_in_queue))
-dispatcher.add_handler(MessageHandler(Filters.all, on_message))
 
 updater.start_polling()
 updater.idle()
