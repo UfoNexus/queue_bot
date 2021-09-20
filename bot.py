@@ -18,18 +18,30 @@ def on_message(update, context):
 
 
 current_queue = {}
+queue_username_list = []
+queue_name_list = []
 
 
 def get_in_queue(update, context):
-    queue_number = len(current_queue)
-    current_queue[queue_number + 1] = f'login{queue_number+1}', f'name{queue_number+1}'
-    login, name = current_queue[1]
-    queue_login_list = [(current_queue[i])[0] for i in current_queue]
+    user = update.message.from_user
+    active_username = user['username']
+    active_truename = f'{user["first_name"]} {user["last_name"]}'
+    queue_username_list = [(current_queue[i])[0] for i in current_queue]
     queue_name_list = [(current_queue[i])[1] for i in current_queue]
-    update.message.reply_text(f'{name} встал в очередь',
-                              quote=True)
-    update.message.reply_text('Стоят в очереди:\n'
-                              + "\n".join(queue_name_list))
+    if active_username not in queue_username_list:
+        queue_number = len(current_queue) + 1
+        current_queue[queue_number] = f'{active_username}', f'{active_truename}'
+        queue_username_list.append((current_queue[queue_number])[0])
+        queue_name_list.append((current_queue[queue_number])[1])
+        update.message.reply_text(f'{active_username} встал в очередь',
+                                  quote=True)
+        update.message.reply_text('Стоят в очереди:\n'
+                                  + "\n".join(queue_name_list))
+    elif active_username in queue_username_list:
+        update.message.reply_text('Ты уже стоишь в очереди',
+                                  quote=True)
+        update.message.reply_text('Стоят в очереди:\n'
+                                  + "\n".join(queue_name_list))
 
 
 dispatcher = updater.dispatcher
