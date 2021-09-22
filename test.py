@@ -1,10 +1,7 @@
-current_queue = {
-    1: ('login1', 'name1'),
-    2: ('login2', 'name2'),
-    3: ('login3', 'name3')
-}
+test_list = ['aaa', 'bbb', 'ccc', 'ddd', 'eee']
+numbered = []
 
-number = len(current_queue)
-current_queue[number + 1] = f'login{number+1}', f'name{number+1}'
+for i, word in enumerate(test_list):
+    numbered.append(f'{i+1}. {test_list[i]}')
 
-print(current_queue)
+print(numbered)
