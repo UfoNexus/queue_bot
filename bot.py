@@ -2,22 +2,25 @@ from telegram.ext import Updater, CommandHandler
 
 
 print('Бот запущен. Нажмите Ctrl+C для завершения')
+
+GREETING = 'Привет, я бот очередей'
 QUEUE_SUCCESS = 'встал в очередь'
-QUEUE_ERROR = 'Ты уже стоишь в очереди'
+QUEUE_ALREADY_IN = 'Ты уже стоишь в очереди'
 QUEUE_CURRENT = 'Стоят в очереди:\n'
+QUEUE_COMPLETE = 'В очереди больше никого нет'
 
 token = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
 updater = Updater(token, use_context=True)
 
 
-def on_start(update, context):
-    chat = update.effective_chat
-    context.bot.send_message(chat_id=chat.id, text='Привет, я бот очередей')
-
-
 current_queue = {}
 queue_id_list = []
 queue_name_list = []
+queue_counter = 0
+
+
+def on_start(update, context):
+    update.message.reply_text(GREETING, quote=False)
 
 
 def get_in_queue(update, context):
@@ -37,19 +40,31 @@ def get_in_queue(update, context):
             queue_name_list_numbered.append(f'{i+1}. {queue_name_list[i]}')
         update.message.reply_text(f'{active_truename} {QUEUE_SUCCESS}')
         update.message.reply_text(QUEUE_CURRENT +
-                                  '\n'.join(queue_name_list_numbered))
+                                  '\n'.join(queue_name_list_numbered), quote=False)
     else:
         queue_name_list_numbered = []
         for i, name in enumerate(queue_name_list):
             queue_name_list_numbered.append(f'{i+1}. {queue_name_list[i]}')
-        update.message.reply_text(QUEUE_ERROR, quote=True)
+        update.message.reply_text(QUEUE_ALREADY_IN)
         update.message.reply_text(QUEUE_CURRENT +
-                                  '\n'.join(queue_name_list_numbered))
+                                  '\n'.join(queue_name_list_numbered), quote=False)
+
+
+def call_next(update, context):
+    global queue_counter
+    if queue_counter < len(current_queue):
+        queue_counter += 1
+        next_user = current_queue[queue_counter][0], current_queue[queue_counter][1]
+        next_user_mention = f'[{next_user[1]}](tg://user?id={str(next_user[0])})'
+        update.message.reply_text(next_user_mention, parse_mode="Markdown")
+    else:
+        update.message.reply_text(QUEUE_COMPLETE, quote=False)
 
 
 dispatcher = updater.dispatcher
 dispatcher.add_handler(CommandHandler("start", on_start))
 dispatcher.add_handler(CommandHandler("get_in", get_in_queue))
+dispatcher.add_handler(CommandHandler("call", call_next))
 
 updater.start_polling()
 updater.idle()

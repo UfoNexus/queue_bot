@@ -1,7 +1,7 @@
-test_list = ['aaa', 'bbb', 'ccc', 'ddd', 'eee']
-numbered = []
+test = {
+    1: 'test1',
+    2: 'test2',
+    3: 'test3'
+}
 
-for i, word in enumerate(test_list):
-    numbered.append(f'{i+1}. {test_list[i]}')
-
-print(numbered)
+print(len(test))
