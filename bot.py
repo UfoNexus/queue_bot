@@ -8,6 +8,8 @@ QUEUE_SUCCESS = 'встал в очередь'
 QUEUE_ALREADY_IN = 'Ты уже стоишь в очереди'
 QUEUE_CURRENT = 'Стоят в очереди:\n'
 QUEUE_COMPLETE = 'В очереди больше никого нет'
+QUEUE_NEXT = ', к тебе взывают'
+ADMIN_CONTROL = 'Взывать к людям из очереди может только админ группы'
 
 token = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
 updater = Updater(token, use_context=True)
@@ -17,6 +19,10 @@ current_queue = {}
 queue_id_list = []
 queue_name_list = []
 queue_counter = 0
+
+
+def get_admin_ids(bot, chat_id):
+    return [admin.user.id for admin in bot.get_chat_administrators(chat_id)]
 
 
 def on_start(update, context):
@@ -40,25 +46,33 @@ def get_in_queue(update, context):
             queue_name_list_numbered.append(f'{i+1}. {queue_name_list[i]}')
         update.message.reply_text(f'{active_truename} {QUEUE_SUCCESS}')
         update.message.reply_text(QUEUE_CURRENT +
-                                  '\n'.join(queue_name_list_numbered), quote=False)
+                                  '\n'.join(queue_name_list_numbered),
+                                  quote=False)
     else:
         queue_name_list_numbered = []
         for i, name in enumerate(queue_name_list):
             queue_name_list_numbered.append(f'{i+1}. {queue_name_list[i]}')
         update.message.reply_text(QUEUE_ALREADY_IN)
         update.message.reply_text(QUEUE_CURRENT +
-                                  '\n'.join(queue_name_list_numbered), quote=False)
+                                  '\n'.join(queue_name_list_numbered),
+                                  quote=False)
 
 
 def call_next(update, context):
-    global queue_counter
-    if queue_counter < len(current_queue):
-        queue_counter += 1
-        next_user = current_queue[queue_counter][0], current_queue[queue_counter][1]
-        next_user_mention = f'[{next_user[1]}](tg://user?id={str(next_user[0])})'
-        update.message.reply_text(next_user_mention, parse_mode="Markdown")
+    if update.effective_user.id in get_admin_ids(context.bot,
+                                                 update.message.chat_id):
+        global queue_counter
+        if queue_counter < len(current_queue):
+            queue_counter += 1
+            next_user = (current_queue[queue_counter][0],
+                         current_queue[queue_counter][1])
+            next_userlink = f'(tg://user?id={str(next_user[0])})'
+            next_user_mention = f'[{next_user[1]}]{next_userlink}{QUEUE_NEXT}'
+            update.message.reply_text(next_user_mention, parse_mode="Markdown")
+        else:
+            update.message.reply_text(QUEUE_COMPLETE, quote=False)
     else:
-        update.message.reply_text(QUEUE_COMPLETE, quote=False)
+        update.message.reply_text(ADMIN_CONTROL, quote=False)
 
 
 dispatcher = updater.dispatcher
