@@ -9,7 +9,6 @@ token = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
 updater = Updater(token, use_context=True)
 
 
-chat_id = 0
 current_queue = {}
 queue_id_list = []
 queue_name_list = []
@@ -35,7 +34,6 @@ def buttons_setup():
 
 
 def help_user(update, context):
-    global chat_id
     chat_id = update.effective_chat.id
     context.bot.send_message(
         chat_id=chat_id,
@@ -44,7 +42,6 @@ def help_user(update, context):
 
 
 def on_start(update, context):
-    global chat_id
     chat_id = update.effective_chat.id
     message_id = update.effective_message.message_id
     if len(current_queue) == 0:
@@ -67,7 +64,7 @@ def on_start(update, context):
 
 
 def get_in_queue(update, context):
-    global chat_id
+    chat_id = update.effective_chat.id
     user = update.message.from_user
     active_id = user['id']
     global queue_message_id
@@ -102,7 +99,7 @@ def get_in_queue(update, context):
 
 
 def call_next(update, context):
-    global chat_id
+    chat_id = update.effective_chat.id
     if update.effective_user.id in get_admin_ids(
         context.bot,
         update.message.chat_id
@@ -132,7 +129,7 @@ def call_next(update, context):
 
 
 def button(update, context):
-    global chat_id
+    chat_id = update.effective_chat.id
     if update.effective_user.id in get_admin_ids(
         context.bot,
         update.callback_query.message.chat_id
@@ -165,12 +162,36 @@ def button(update, context):
         )
 
 
+def clear(update, context):
+    chat_id = update.effective_chat.id
+    global message_id
+    global current_queue
+    global queue_id_list
+    global queue_name_list
+    global queue_counter
+    global queue_message_id
+    context.bot.unpinChatMessage(
+        chat_id=chat_id,
+        message_id=queue_message_id
+    )
+    current_queue = {}
+    queue_id_list = []
+    queue_name_list = []
+    queue_counter = 0
+    queue_message_id = 0
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=messages.CLEAR
+    )
+
+
 dispatcher = updater.dispatcher
+dispatcher.add_handler(CommandHandler("help", help_user))
 dispatcher.add_handler(CommandHandler("start", on_start))
 dispatcher.add_handler(CommandHandler("get_in", get_in_queue))
 dispatcher.add_handler(CommandHandler("call", call_next))
 updater.dispatcher.add_handler(CallbackQueryHandler(button))
-dispatcher.add_handler(CommandHandler("help", help_user))
+dispatcher.add_handler(CommandHandler("clear", clear))
 
 updater.start_polling()
 updater.idle()
