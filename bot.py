@@ -1,20 +1,9 @@
+import messages
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Bot
 
 
 print('Бот запущен. Нажмите Ctrl+C для завершения')
-
-GREETING = 'В очереди никто не стоит'
-QUEUE_SUCCESS = 'встал в очередь'
-QUEUE_ALREADY_IN = 'Ты уже стоишь в очереди'
-QUEUE_CURRENT = 'Стоят в очереди:\n'
-QUEUE_COMPLETE = 'В очереди больше никого нет'
-QUEUE_NEXT = ', к тебе взывают'
-ADMIN_CONTROL = 'Взывать к людям из очереди может только админ группы'
-BUTTON_CALL_NEXT = 'Возвать к следующему'
-BUTTON_CALL_CURRENT = 'Разбудить'
-WARNING = ('Кто-то все еще стоит в очереди.\n'
-           'Очистите ее командой /clear.')
 
 token = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
 updater = Updater(token, use_context=True)
@@ -35,11 +24,23 @@ def get_admin_ids(bot, chat_id):
 def buttons_setup():
     button_list = [
         [
-            InlineKeyboardButton(BUTTON_CALL_NEXT, callback_data='/call'),
+            InlineKeyboardButton(
+                messages.BUTTON_CALL_NEXT,
+                callback_data='/call'
+            ),
         ]
     ]
     reply_markup = InlineKeyboardMarkup(button_list)
     return reply_markup
+
+
+def help_user(update, context):
+    global chat_id
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=messages.HELP_MESSAGE
+    )
 
 
 def on_start(update, context):
@@ -49,7 +50,7 @@ def on_start(update, context):
     if len(current_queue) == 0:
         context.bot.send_message(
             chat_id=chat_id,
-            text=GREETING,
+            text=messages.GREETING,
             reply_markup=buttons_setup()
         )
         global queue_message_id
@@ -61,7 +62,7 @@ def on_start(update, context):
     else:
         context.bot.send_message(
             chat_id=chat_id,
-            text=WARNING
+            text=messages.WARNING
         )
 
 
@@ -83,10 +84,10 @@ def get_in_queue(update, context):
         for i, name in enumerate(queue_name_list):
             queue_name_list_numbered.append(f'{i+1}. {queue_name_list[i]}')
         update.message.reply_text(
-            f'{active_truename} {QUEUE_SUCCESS}'
+            f'{active_truename} {messages.QUEUE_SUCCESS}'
         )
         context.bot.edit_message_text(
-            QUEUE_CURRENT + '\n'.join(queue_name_list_numbered),
+            messages.QUEUE_CURRENT + '\n'.join(queue_name_list_numbered),
             chat_id=chat_id,
             message_id=queue_message_id,
             reply_markup=buttons_setup()
@@ -96,7 +97,7 @@ def get_in_queue(update, context):
         for i, name in enumerate(queue_name_list):
             queue_name_list_numbered.append(f'{i+1}. {queue_name_list[i]}')
         update.message.reply_text(
-            QUEUE_ALREADY_IN
+            messages.QUEUE_ALREADY_IN
         )
 
 
@@ -115,18 +116,18 @@ def call_next(update, context):
             next_user_mention = f'[{next_user[1]}]{next_userlink}'
             context.bot.send_message(
                 chat_id=chat_id,
-                text=f'{next_user_mention}{QUEUE_NEXT}',
+                text=f'{next_user_mention}{messages.QUEUE_NEXT}',
                 parse_mode="Markdown"
             )
         else:
             context.bot.send_message(
                 chat_id=chat_id,
-                text=QUEUE_COMPLETE
+                text=messages.QUEUE_COMPLETE
             )
     else:
         context.bot.send_message(
             chat_id=chat_id,
-            text=ADMIN_CONTROL
+            text=messages.ADMIN_CONTROL
         )
 
 
@@ -146,7 +147,7 @@ def button(update, context):
                              current_queue[queue_counter][1])
                 next_userlink = f'(tg://user?id={str(next_user[0])})'
                 next_user_mention = (
-                    f'[{next_user[1]}]{next_userlink}{QUEUE_NEXT}'
+                    f'[{next_user[1]}]{next_userlink}{messages.QUEUE_NEXT}'
                 )
                 bot.sendMessage(
                     chat_id=chat_id,
@@ -155,12 +156,12 @@ def button(update, context):
             else:
                 bot.sendMessage(
                     chat_id=chat_id,
-                    text=QUEUE_COMPLETE
+                    text=messages.QUEUE_COMPLETE
                 )
     else:
         context.bot.send_message(
             chat_id=chat_id,
-            text=ADMIN_CONTROL
+            text=messages.ADMIN_CONTROL
         )
 
 
@@ -169,6 +170,7 @@ dispatcher.add_handler(CommandHandler("start", on_start))
 dispatcher.add_handler(CommandHandler("get_in", get_in_queue))
 dispatcher.add_handler(CommandHandler("call", call_next))
 updater.dispatcher.add_handler(CallbackQueryHandler(button))
+dispatcher.add_handler(CommandHandler("help", help_user))
 
 updater.start_polling()
 updater.idle()
