@@ -145,9 +145,14 @@ def call_next(update, context):
                 text=messages.QUEUE_COMPLETE
             )
     else:
+        user = update.message.from_user
+        active_id = user['id']
+        active_name = user["first_name"]
+        user_mention = f'[{active_name}](tg://user?id={active_id})'
         context.bot.send_message(
             chat_id=chat_id,
-            text=messages.ADMIN_CONTROL
+            text=messages.ADMIN_CONTROL.format(user_mention),
+            parse_mode=ParseMode.MARKDOWN_V2
         )
 
 
@@ -193,9 +198,14 @@ def button(update, context):
                     text=messages.QUEUE_COMPLETE
                 )
     else:
+        user = update.effective_user
+        active_id = user['id']
+        active_name = user["first_name"]
+        user_mention = f'[{active_name}](tg://user?id={active_id})'
         context.bot.send_message(
             chat_id=chat_id,
-            text=messages.ADMIN_CONTROL
+            text=messages.ADMIN_CONTROL.format(user_mention),
+            parse_mode=ParseMode.MARKDOWN_V2
         )
 
 
