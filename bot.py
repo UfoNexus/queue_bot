@@ -1,6 +1,6 @@
 import messages
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Bot
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Bot, ParseMode
 
 
 print('Бот запущен. Нажмите Ctrl+C для завершения')
@@ -11,9 +11,9 @@ updater = Updater(token, use_context=True)
 
 current_queue = {}
 queue_id_list = []
-queue_name_list = []
 queue_counter = 0
 queue_message_id = 0
+queue_name_list_numbered = []
 
 
 def get_admin_ids(bot, chat_id):
@@ -68,6 +68,7 @@ def get_in_queue(update, context):
     user = update.message.from_user
     active_id = user['id']
     global queue_message_id
+    global queue_name_list_numbered
     if active_id not in queue_id_list:
         if user['last_name'] is None:
             active_truename = user["first_name"]
@@ -76,10 +77,9 @@ def get_in_queue(update, context):
         queue_number = len(current_queue) + 1
         current_queue[queue_number] = active_id, active_truename
         queue_id_list.append(current_queue[queue_number][0])
-        queue_name_list.append(current_queue[queue_number][1])
-        queue_name_list_numbered = []
-        for i, name in enumerate(queue_name_list):
-            queue_name_list_numbered.append(f'{i+1}. {queue_name_list[i]}')
+        queue_name_list_numbered.append(
+            f'{queue_number}\\. {current_queue[queue_number][1]}'
+        )
         update.message.reply_text(
             f'{active_truename} {messages.QUEUE_SUCCESS}'
         )
@@ -87,12 +87,10 @@ def get_in_queue(update, context):
             messages.QUEUE_CURRENT + '\n'.join(queue_name_list_numbered),
             chat_id=chat_id,
             message_id=queue_message_id,
-            reply_markup=buttons_setup()
+            reply_markup=buttons_setup(),
+            parse_mode=ParseMode.MARKDOWN_V2
         )
     else:
-        queue_name_list_numbered = []
-        for i, name in enumerate(queue_name_list):
-            queue_name_list_numbered.append(f'{i+1}. {queue_name_list[i]}')
         update.message.reply_text(
             messages.QUEUE_ALREADY_IN
         )
@@ -100,6 +98,8 @@ def get_in_queue(update, context):
 
 def call_next(update, context):
     chat_id = update.effective_chat.id
+    global queue_message_id
+    global queue_name_list_numbered
     if update.effective_user.id in get_admin_ids(
         context.bot,
         update.message.chat_id
@@ -114,7 +114,17 @@ def call_next(update, context):
             context.bot.send_message(
                 chat_id=chat_id,
                 text=f'{next_user_mention}{messages.QUEUE_NEXT}',
-                parse_mode="Markdown"
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+            queue_name_list_numbered[queue_counter-1] = (
+                f'~{queue_name_list_numbered[queue_counter-1]}~'
+            )
+            context.bot.edit_message_text(
+                messages.QUEUE_CURRENT + '\n'.join(queue_name_list_numbered),
+                chat_id=chat_id,
+                message_id=queue_message_id,
+                reply_markup=buttons_setup(),
+                parse_mode=ParseMode.MARKDOWN_V2
             )
         else:
             context.bot.send_message(
@@ -130,6 +140,8 @@ def call_next(update, context):
 
 def button(update, context):
     chat_id = update.effective_chat.id
+    global queue_message_id
+    global queue_name_list_numbered
     if update.effective_user.id in get_admin_ids(
         context.bot,
         update.callback_query.message.chat_id
@@ -144,12 +156,24 @@ def button(update, context):
                              current_queue[queue_counter][1])
                 next_userlink = f'(tg://user?id={str(next_user[0])})'
                 next_user_mention = (
-                    f'[{next_user[1]}]{next_userlink}{messages.QUEUE_NEXT}'
+                    f'[{next_user[1]}]{next_userlink}'
                 )
                 bot.sendMessage(
                     chat_id=chat_id,
-                    text=next_user_mention,
-                    parse_mode="Markdown")
+                    text=f'{next_user_mention}{messages.QUEUE_NEXT}',
+                    parse_mode=ParseMode.MARKDOWN_V2
+                )
+                queue_name_list_numbered[queue_counter-1] = (
+                    f'~{queue_name_list_numbered[queue_counter-1]}~'
+                )
+                context.bot.edit_message_text(
+                    messages.QUEUE_CURRENT +
+                    '\n'.join(queue_name_list_numbered),
+                    chat_id=chat_id,
+                    message_id=queue_message_id,
+                    reply_markup=buttons_setup(),
+                    parse_mode=ParseMode.MARKDOWN_V2
+                )
             else:
                 bot.sendMessage(
                     chat_id=chat_id,
@@ -164,21 +188,20 @@ def button(update, context):
 
 def clear(update, context):
     chat_id = update.effective_chat.id
-    global message_id
     global current_queue
     global queue_id_list
-    global queue_name_list
     global queue_counter
     global queue_message_id
+    global queue_name_list_numbered
     context.bot.unpinChatMessage(
         chat_id=chat_id,
         message_id=queue_message_id
     )
     current_queue = {}
     queue_id_list = []
-    queue_name_list = []
     queue_counter = 0
     queue_message_id = 0
+    queue_name_list_numbered = []
     context.bot.send_message(
         chat_id=chat_id,
         text=messages.CLEAR
