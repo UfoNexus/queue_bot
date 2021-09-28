@@ -65,15 +65,18 @@ def on_start(update, context):
 
 def get_in_queue(update, context):
     chat_id = update.effective_chat.id
-    user = update.message.from_user
-    active_id = user['id']
+    global current_queue
+    global queue_id_list
     global queue_message_id
     global queue_name_list_numbered
+    global queue_counter
+    user = update.message.from_user
+    active_id = user['id']
+    if user['last_name'] is None:
+        active_truename = user["first_name"]
+    else:
+        active_truename = f'{user["first_name"]} {user["last_name"]}'
     if active_id not in queue_id_list:
-        if user['last_name'] is None:
-            active_truename = user["first_name"]
-        else:
-            active_truename = f'{user["first_name"]} {user["last_name"]}'
         queue_number = len(current_queue) + 1
         current_queue[queue_number] = active_id, active_truename
         queue_id_list.append(current_queue[queue_number][0])
@@ -91,9 +94,19 @@ def get_in_queue(update, context):
             parse_mode=ParseMode.MARKDOWN_V2
         )
     else:
-        update.message.reply_text(
-            messages.QUEUE_ALREADY_IN
-        )
+        searched_number = queue_id_list.index(active_id) + 1
+        if queue_counter == 0 or queue_counter >= len(queue_id_list):
+            update.message.reply_text(
+                messages.QUEUE_ALREADY_INACTIVE.format(
+                    searched_number
+                )
+            )
+        else:
+            update.message.reply_text(
+                messages.QUEUE_ALREADY_ACTIVE.format(
+                    searched_number, queue_counter
+                )
+            )
 
 
 def call_next(update, context):
