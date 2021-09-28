@@ -9,6 +9,7 @@ token = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
 updater = Updater(token, use_context=True)
 
 
+bot_status = 'inactive'
 current_queue = {}
 queue_id_list = []
 queue_counter = 0
@@ -44,7 +45,9 @@ def help_user(update, context):
 def on_start(update, context):
     chat_id = update.effective_chat.id
     message_id = update.effective_message.message_id
-    if len(current_queue) == 0:
+    global bot_status
+    if bot_status == 'inactive':
+        bot_status = 'active'
         context.bot.send_message(
             chat_id=chat_id,
             text=messages.GREETING,
@@ -65,6 +68,13 @@ def on_start(update, context):
 
 def get_in_queue(update, context):
     chat_id = update.effective_chat.id
+    global bot_status
+    if bot_status == 'inactive':
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=messages.NO_START_ERROR
+        )
+        return
     global current_queue
     global queue_id_list
     global queue_message_id
@@ -111,6 +121,13 @@ def get_in_queue(update, context):
 
 def call_next(update, context):
     chat_id = update.effective_chat.id
+    global bot_status
+    if bot_status == 'inactive':
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=messages.NO_START_ERROR
+        )
+        return
     global queue_message_id
     global queue_name_list_numbered
     if update.effective_user.id in get_admin_ids(
@@ -158,6 +175,13 @@ def call_next(update, context):
 
 def button(update, context):
     chat_id = update.effective_chat.id
+    global bot_status
+    if bot_status == 'inactive':
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=messages.NO_START_ERROR
+        )
+        return
     global queue_message_id
     global queue_name_list_numbered
     if update.effective_user.id in get_admin_ids(
@@ -211,24 +235,32 @@ def button(update, context):
 
 def clear(update, context):
     chat_id = update.effective_chat.id
+    global bot_status
     global current_queue
-    global queue_id_list
-    global queue_counter
-    global queue_message_id
-    global queue_name_list_numbered
-    context.bot.unpinChatMessage(
-        chat_id=chat_id,
-        message_id=queue_message_id
-    )
-    current_queue = {}
-    queue_id_list = []
-    queue_counter = 0
-    queue_message_id = 0
-    queue_name_list_numbered = []
-    context.bot.send_message(
-        chat_id=chat_id,
-        text=messages.CLEAR
-    )
+    if bot_status == 'active':
+        global queue_id_list
+        global queue_counter
+        global queue_message_id
+        global queue_name_list_numbered
+        context.bot.unpinChatMessage(
+            chat_id=chat_id,
+            message_id=queue_message_id
+        )
+        current_queue = {}
+        queue_id_list = []
+        queue_counter = 0
+        queue_message_id = 0
+        queue_name_list_numbered = []
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=messages.CLEAR
+        )
+        bot_status = 'inactive'
+    else:
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=messages.CLEAR_ERROR
+        )
 
 
 dispatcher = updater.dispatcher
