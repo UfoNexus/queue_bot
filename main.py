@@ -1,12 +1,20 @@
 import messages
+import os
+import http
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+from telegram import (
+    InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Bot, Update
+)
+from flask import Flask, request
+from werkzeug.wrappers import Response
 
 
 print('Бот запущен. Нажмите Ctrl+C для завершения')
 
 token = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
 updater = Updater(token, use_context=True)
+app = Flask(__name__)
+bot = Bot(token=os.environ["TOKEN"])
 
 
 bot_status = 'inactive'
@@ -272,3 +280,11 @@ dispatcher.add_handler(CommandHandler("clear", clear))
 
 updater.start_polling()
 updater.idle()
+
+
+@app.route("/", methods=["POST"])
+def index() -> Response:
+    dispatcher.process_update(
+        Update.de_json(request.get_json(force=True), bot))
+
+    return "", http.HTTPStatus.NO_CONTENT
