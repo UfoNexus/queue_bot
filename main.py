@@ -1,20 +1,14 @@
 import messages
-import os
-import http
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 from telegram import (
-    InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Bot, Update
+    InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 )
-from flask import Flask, request
-from werkzeug.wrappers import Response
 
 
 print('Бот запущен. Нажмите Ctrl+C для завершения')
 
 token = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
 updater = Updater(token, use_context=True)
-app = Flask(__name__)
-bot = Bot(token=os.environ["TOKEN"])
 
 
 bot_status = 'inactive'
@@ -52,17 +46,16 @@ def help_user(update, context):
 
 def on_start(update, context):
     chat_id = update.effective_chat.id
-    message_id = update.effective_message.message_id
     global bot_status
     if bot_status == 'inactive':
         bot_status = 'active'
-        context.bot.send_message(
+        msg = context.bot.send_message(
             chat_id=chat_id,
             text=messages.GREETING,
             reply_markup=buttons_setup()
         )
         global queue_message_id
-        queue_message_id = message_id + 1
+        queue_message_id = msg.message_id
         context.bot.pinChatMessage(
             chat_id=chat_id,
             message_id=queue_message_id
@@ -280,11 +273,3 @@ dispatcher.add_handler(CommandHandler("clear", clear))
 
 updater.start_polling()
 updater.idle()
-
-
-@app.route("/", methods=["POST"])
-def index() -> Response:
-    dispatcher.process_update(
-        Update.de_json(request.get_json(force=True), bot))
-
-    return "", http.HTTPStatus.NO_CONTENT
