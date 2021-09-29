@@ -241,10 +241,6 @@ def clear(update, context):
         global queue_counter
         global queue_message_id
         global queue_name_list_numbered
-        context.bot.unpinChatMessage(
-            chat_id=chat_id,
-            message_id=queue_message_id
-        )
         current_queue = {}
         queue_id_list = []
         queue_counter = 0
@@ -255,6 +251,10 @@ def clear(update, context):
             text=messages.CLEAR
         )
         bot_status = 'inactive'
+        context.bot.unpinChatMessage(
+            chat_id=chat_id,
+            message_id=queue_message_id
+        )
     else:
         context.bot.send_message(
             chat_id=chat_id,
