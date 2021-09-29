@@ -1,6 +1,6 @@
 import messages
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Bot, ParseMode
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 
 
 print('Бот запущен. Нажмите Ctrl+C для завершения')
@@ -188,7 +188,6 @@ def button(update, context):
         context.bot,
         update.callback_query.message.chat_id
     ):
-        bot = Bot(token=token)
         query = update.callback_query
         if query.data == '/call':
             global queue_counter
@@ -200,7 +199,7 @@ def button(update, context):
                 next_user_mention = (
                     f'[{next_user[1]}]{next_userlink}'
                 )
-                bot.sendMessage(
+                context.bot.sendMessage(
                     chat_id=chat_id,
                     text=f'{next_user_mention}{messages.QUEUE_NEXT}',
                     parse_mode=ParseMode.MARKDOWN_V2
@@ -217,7 +216,7 @@ def button(update, context):
                     parse_mode=ParseMode.MARKDOWN_V2
                 )
             else:
-                bot.sendMessage(
+                context.bot.sendMessage(
                     chat_id=chat_id,
                     text=messages.QUEUE_COMPLETE
                 )
