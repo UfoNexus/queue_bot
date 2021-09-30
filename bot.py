@@ -16,7 +16,7 @@ print('Бот запущен. Нажмите Ctrl+C для завершения'
 
 logger = logging.getLogger(__name__)
 TOKEN = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
-PORT = int(os.environ.get('PORT', 5000))
+PORT = int(os.environ.get('PORT', 80))
 
 
 bot_status = 'inactive'
@@ -287,10 +287,10 @@ def main():
     dispatcher.add_error_handler(error)
     updater.start_webhook(listen="0.0.0.0",
                           port=int(PORT),
-                          url_path=TOKEN)
-    updater.bot.setWebhook(
-        'https://arcane-forest-43632.herokuapp.com/' + TOKEN
-    )
+                          url_path=TOKEN,
+                          webhook_url=(
+                              'https://arcane-forest-43632.herokuapp.com/' +
+                              TOKEN))
     updater.idle()
 
 
