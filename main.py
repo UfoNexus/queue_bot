@@ -1,14 +1,20 @@
 import messages
+import logging
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 from telegram import (
     InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 )
 
 
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+
 print('Бот запущен. Нажмите Ctrl+C для завершения')
 
-token = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
-updater = Updater(token, use_context=True)
+logger = logging.getLogger(__name__)
+TOKEN = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
 
 
 bot_status = 'inactive'
@@ -263,13 +269,23 @@ def clear(update, context):
         )
 
 
-dispatcher = updater.dispatcher
-dispatcher.add_handler(CommandHandler("help", help_user))
-dispatcher.add_handler(CommandHandler("start", on_start))
-dispatcher.add_handler(CommandHandler("get_in", get_in_queue))
-dispatcher.add_handler(CommandHandler("call", call_next))
-updater.dispatcher.add_handler(CallbackQueryHandler(button))
-dispatcher.add_handler(CommandHandler("clear", clear))
+def error(update, context):
+    logger.warning('Update "%s" caused error "%s"', update, context.error)
 
-updater.start_polling()
-updater.idle()
+
+def main():
+    updater = Updater(TOKEN, use_context=True)
+    dispatcher = updater.dispatcher
+    dispatcher.add_handler(CommandHandler("help", help_user))
+    dispatcher.add_handler(CommandHandler("start", on_start))
+    dispatcher.add_handler(CommandHandler("get_in", get_in_queue))
+    dispatcher.add_handler(CommandHandler("call", call_next))
+    updater.dispatcher.add_handler(CallbackQueryHandler(button))
+    dispatcher.add_handler(CommandHandler("clear", clear))
+    dispatcher.add_error_handler(error)
+    updater.start_polling()
+    updater.idle()
+
+
+if __name__ == '__main__':
+    main()
