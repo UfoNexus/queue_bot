@@ -284,7 +284,7 @@ def error(update, context):
 def main():
     updater = Updater(TOKEN, use_context=True)
     dispatcher = updater.dispatcher
-    dispatcher.job_queue.run_repeating(upd, interval=30)
+    dispatcher.job_queue.run_repeating(upd, interval=1500)
     dispatcher.add_handler(CommandHandler("help", help_user))
     dispatcher.add_handler(CommandHandler("start", on_start))
     dispatcher.add_handler(CommandHandler("get_in", get_in_queue))
