@@ -30,8 +30,7 @@ queue_name_list_numbered = []
 
 
 def upd(context: CallbackContext):
-    context.bot.send_message(chat_id='289061137',
-                             text='Проверка 30 секунд')
+    print('Uptime 25 minutes')
 
 
 def get_admin_ids(bot, chat_id):
