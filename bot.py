@@ -1,7 +1,9 @@
 import messages
 import logging
 import os
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+from telegram.ext import (
+    Updater, CommandHandler, CallbackQueryHandler, CallbackContext
+)
 from telegram import (
     InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 )
@@ -25,6 +27,11 @@ queue_id_list = []
 queue_counter = 0
 queue_message_id = 0
 queue_name_list_numbered = []
+
+
+def upd(context: CallbackContext):
+    context.bot.send_message(chat_id='289061137',
+                             text='Проверка 30 секунд')
 
 
 def get_admin_ids(bot, chat_id):
@@ -278,6 +285,7 @@ def error(update, context):
 def main():
     updater = Updater(TOKEN, use_context=True)
     dispatcher = updater.dispatcher
+    dispatcher.job_queue.run_repeating(upd, interval=30)
     dispatcher.add_handler(CommandHandler("help", help_user))
     dispatcher.add_handler(CommandHandler("start", on_start))
     dispatcher.add_handler(CommandHandler("get_in", get_in_queue))
