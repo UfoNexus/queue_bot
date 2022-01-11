@@ -17,7 +17,7 @@ logging.basicConfig(
 print('Бот запущен. Нажмите Ctrl+C для завершения')
 
 logger = logging.getLogger(__name__)
-TOKEN = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
+TOKEN = ''
 PORT = int(os.environ.get('PORT', 80))
 
 
