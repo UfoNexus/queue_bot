@@ -1,9 +1,10 @@
-import messages
 import logging
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+import messages
+
 from telegram import (
     InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 )
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 
 logging.basicConfig(
@@ -29,7 +30,7 @@ def get_admin_ids(bot, chat_id):
     return [admin.user.id for admin in bot.get_chat_administrators(chat_id)]
 
 
-def buttons_setup():
+def call_button():
     button_list = [
         [
             InlineKeyboardButton(
@@ -58,7 +59,7 @@ def on_start(update, context):
         msg = context.bot.send_message(
             chat_id=chat_id,
             text=messages.GREETING,
-            reply_markup=buttons_setup()
+            reply_markup=call_button()
         )
         global queue_message_id
         queue_message_id = msg.message_id
@@ -107,7 +108,7 @@ def get_in_queue(update, context):
             messages.QUEUE_CURRENT + '\n'.join(queue_name_list_numbered),
             chat_id=chat_id,
             message_id=queue_message_id,
-            reply_markup=buttons_setup(),
+            reply_markup=call_button(),
             parse_mode=ParseMode.MARKDOWN_V2
         )
     else:
@@ -124,6 +125,80 @@ def get_in_queue(update, context):
                     searched_number, queue_counter
                 )
             )
+
+
+def change_position(update, context):
+    chat_id = update.effective_chat.id
+    global bot_status
+    if bot_status == 'inactive':
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=messages.NO_START_ERROR
+        )
+        return
+
+    if update.effective_user.id in get_admin_ids(
+            context.bot,
+            update.message.chat_id
+    ):
+        if len(context.args) == 0:
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=messages.ZERO_ARGS
+            )
+            return
+        if len(context.args) == 1:
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=messages.ONE_ARG
+            )
+            return
+        if type(context.args[0]) != int or type(context.args[1]) != int:
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=messages.WRONG_TYPE
+            )
+        global current_queue
+        old_position = int(context.args[0])
+        new_position = int(context.args[1])
+        if (old_position not in current_queue.keys() or
+                new_position not in current_queue.keys()):
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=messages.POSITION_ERROR
+            )
+            return
+        target_user = current_queue.get(old_position)
+        moving_user = target_user
+
+        if new_position < old_position:
+            for i in range(1, len(current_queue)+1, 1):
+                value = current_queue.get(i)
+                if new_position == i:
+                    current_queue[new_position] = moving_user
+                    if value == target_user:
+                        break
+                    moving_user = value
+                    new_position += 1
+        if new_position > old_position:
+            for i in range(len(current_queue), 0, -1):
+                value = current_queue.get(i)
+                if new_position == i:
+                    current_queue[new_position] = moving_user
+                    if value == target_user:
+                        break
+                    moving_user = value
+                    new_position = new_position - 1
+    else:
+        user = update.message.from_user
+        active_id = user['id']
+        active_name = user["first_name"]
+        user_mention = f'[{active_name}](tg://user?id={active_id})'
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=messages.ADMIN_CONTROL.format(user_mention),
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
 
 
 def call_next(update, context):
@@ -160,7 +235,7 @@ def call_next(update, context):
                 messages.QUEUE_CURRENT + '\n'.join(queue_name_list_numbered),
                 chat_id=chat_id,
                 message_id=queue_message_id,
-                reply_markup=buttons_setup(),
+                reply_markup=call_button(),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
         else:
@@ -189,14 +264,14 @@ def button(update, context):
             text=messages.NO_START_ERROR
         )
         return
-    global queue_message_id
-    global queue_name_list_numbered
     if update.effective_user.id in get_admin_ids(
         context.bot,
         update.callback_query.message.chat_id
     ):
         query = update.callback_query
         if query.data == '/call':
+            global queue_message_id
+            global queue_name_list_numbered
             global queue_counter
             if queue_counter < len(current_queue):
                 queue_counter += 1
@@ -219,7 +294,7 @@ def button(update, context):
                     '\n'.join(queue_name_list_numbered),
                     chat_id=chat_id,
                     message_id=queue_message_id,
-                    reply_markup=buttons_setup(),
+                    reply_markup=call_button(),
                     parse_mode=ParseMode.MARKDOWN_V2
                 )
             else:
@@ -241,31 +316,45 @@ def button(update, context):
 
 def clear(update, context):
     chat_id = update.effective_chat.id
-    global bot_status
-    global current_queue
-    if bot_status == 'active':
-        global queue_id_list
-        global queue_counter
-        global queue_message_id
-        global queue_name_list_numbered
-        current_queue = {}
-        queue_id_list = []
-        queue_counter = 0
-        queue_message_id = 0
-        queue_name_list_numbered = []
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=messages.CLEAR
-        )
-        bot_status = 'inactive'
-        context.bot.unpinChatMessage(
-            chat_id=chat_id,
-            message_id=queue_message_id
-        )
+    if update.effective_user.id in get_admin_ids(
+            context.bot,
+            update.callback_query.message.chat_id
+    ):
+        global bot_status
+        global current_queue
+        if bot_status == 'active':
+            global queue_id_list
+            global queue_counter
+            global queue_message_id
+            global queue_name_list_numbered
+            current_queue = {}
+            queue_id_list = []
+            queue_counter = 0
+            queue_message_id = 0
+            queue_name_list_numbered = []
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=messages.CLEAR
+            )
+            bot_status = 'inactive'
+            context.bot.unpinChatMessage(
+                chat_id=chat_id,
+                message_id=queue_message_id
+            )
+        else:
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=messages.CLEAR_ERROR
+            )
     else:
+        user = update.effective_user
+        active_id = user['id']
+        active_name = user["first_name"]
+        user_mention = f'[{active_name}](tg://user?id={active_id})'
         context.bot.send_message(
             chat_id=chat_id,
-            text=messages.CLEAR_ERROR
+            text=messages.ADMIN_CONTROL.format(user_mention),
+            parse_mode=ParseMode.MARKDOWN_V2
         )
 
 
@@ -279,6 +368,7 @@ def main():
     dispatcher.add_handler(CommandHandler("help", help_user))
     dispatcher.add_handler(CommandHandler("start", on_start))
     dispatcher.add_handler(CommandHandler("get_in", get_in_queue))
+    dispatcher.add_handler(CommandHandler("change", change_position))
     dispatcher.add_handler(CommandHandler("call", call_next))
     updater.dispatcher.add_handler(CallbackQueryHandler(button))
     dispatcher.add_handler(CommandHandler("clear", clear))
