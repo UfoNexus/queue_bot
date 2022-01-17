@@ -161,14 +161,16 @@ def change_position(update, context):
                 text=messages.ONE_ARG
             )
             return
-        if type(context.args[0]) != int or type(context.args[1]) != int:
+        global current_queue
+        try:
+            old_position = int(context.args[0])
+            new_position = int(context.args[1])
+        except ValueError:
             context.bot.send_message(
                 chat_id=chat_id,
                 text=messages.WRONG_TYPE
             )
-        global current_queue
-        old_position = int(context.args[0])
-        new_position = int(context.args[1])
+            return
         if (old_position not in current_queue.keys() or
                 new_position not in current_queue.keys()):
             context.bot.send_message(
@@ -197,6 +199,20 @@ def change_position(update, context):
                         break
                     moving_user = value
                     new_position = new_position - 1
+        global queue_message_id
+        global queue_name_list_numbered
+        queue_name_list_numbered = []
+        for key, value in current_queue.items():
+            queue_name_list_numbered.append(
+                f'{key}\\. {value[1]}'
+            )
+        context.bot.edit_message_text(
+            messages.QUEUE_CURRENT + '\n'.join(queue_name_list_numbered),
+            chat_id=chat_id,
+            message_id=queue_message_id,
+            reply_markup=call_button(),
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
     else:
         user = update.message.from_user
         active_id = user['id']
@@ -218,6 +234,7 @@ def call_next(update, context):
             text=messages.NO_START_ERROR
         )
         return
+    global current_queue
     global queue_message_id
     global queue_name_list_numbered
     if update.effective_user.id in get_admin_ids(
