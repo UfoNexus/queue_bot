@@ -1,6 +1,7 @@
 import logging
 import messages
 import os
+import requests
 
 from telegram import (
     InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
@@ -18,9 +19,11 @@ logging.basicConfig(
 print('Бот запущен. Нажмите Ctrl+C для завершения')
 
 logger = logging.getLogger(__name__)
-TOKEN = ''
+TOKEN = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
 PORT = int(os.environ.get('PORT', 80))
 
+RETRY_TIME = 1500
+UPTIME_ENDPOINT = 'https://api.thecatapi.com/v1/images/search'
 
 bot_status = 'inactive'
 current_queue = {}
@@ -31,7 +34,8 @@ queue_name_list_numbered = []
 
 
 def upd(context: CallbackContext):
-    print('Uptime 25 minutes')
+    response = requests.get(UPTIME_ENDPOINT)
+    print(response)
 
 
 def get_admin_ids(bot, chat_id):
@@ -343,7 +347,7 @@ def clear(update, context):
     chat_id = update.effective_chat.id
     if update.effective_user.id in get_admin_ids(
             context.bot,
-            update.callback_query.message.chat_id
+            chat_id
     ):
         global bot_status
         global current_queue
