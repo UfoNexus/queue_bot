@@ -3,6 +3,8 @@ import messages
 import os
 import requests
 
+from dotenv import load_dotenv
+
 from telegram import (
     InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 )
@@ -10,6 +12,8 @@ from telegram.ext import (
     Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 )
 
+
+load_dotenv()
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -19,7 +23,7 @@ logging.basicConfig(
 print('Бот запущен. Нажмите Ctrl+C для завершения')
 
 logger = logging.getLogger(__name__)
-TOKEN = '2011946261:AAFClQ54uJ9UvKiwBv4Fipcn47cEwxv7szQ'
+TOKEN = os.getenv('TOKEN')
 PORT = int(os.environ.get('PORT', 80))
 
 RETRY_TIME = 1500
