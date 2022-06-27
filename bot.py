@@ -4,7 +4,6 @@ import os
 import requests
 
 from dotenv import load_dotenv
-
 from telegram import (
     InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 )
@@ -12,6 +11,7 @@ from telegram.ext import (
     Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 )
 
+from database import db, Session
 
 load_dotenv()
 
@@ -29,7 +29,6 @@ PORT = int(os.environ.get('PORT', 80))
 RETRY_TIME = 1500
 UPTIME_ENDPOINT = 'https://api.thecatapi.com/v1/images/search'
 
-bot_status = 'inactive'
 current_queue = {}
 queue_id_list = []
 queue_counter = 0
@@ -69,9 +68,24 @@ def help_user(update, context):
 
 def on_start(update, context):
     chat_id = update.effective_chat.id
-    global bot_status
-    if bot_status == 'inactive':
-        bot_status = 'active'
+    if update.effective_user.id not in get_admin_ids(
+            context.bot,
+            update.message.chat_id
+    ):
+        user = update.message.from_user
+        active_id = user['id']
+        active_name = user["first_name"]
+        user_mention = f'[{active_name}](tg://user?id={active_id})'
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=messages.ADMIN_CONTROL.format(user_mention),
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
+        return
+    session, _ = Session.get_or_create(id=1)
+    if session.is_active is False:
+        session.is_active = True
+        session.save()
         msg = context.bot.send_message(
             chat_id=chat_id,
             text=messages.GREETING,
@@ -92,8 +106,7 @@ def on_start(update, context):
 
 def get_in_queue(update, context):
     chat_id = update.effective_chat.id
-    global bot_status
-    if bot_status == 'inactive':
+    if Session.get(pk=1) is False:
         context.bot.send_message(
             chat_id=chat_id,
             text=messages.NO_START_ERROR
@@ -145,8 +158,7 @@ def get_in_queue(update, context):
 
 def change_position(update, context):
     chat_id = update.effective_chat.id
-    global bot_status
-    if bot_status == 'inactive':
+    if Session.get(pk=1) is False:
         context.bot.send_message(
             chat_id=chat_id,
             text=messages.NO_START_ERROR
@@ -235,8 +247,7 @@ def change_position(update, context):
 
 def call_next(update, context):
     chat_id = update.effective_chat.id
-    global bot_status
-    if bot_status == 'inactive':
+    if Session.get(pk=1) is False:
         context.bot.send_message(
             chat_id=chat_id,
             text=messages.NO_START_ERROR
@@ -290,8 +301,7 @@ def call_next(update, context):
 
 def button(update, context):
     chat_id = update.effective_chat.id
-    global bot_status
-    if bot_status == 'inactive':
+    if Session.get(pk=1) is False:
         context.bot.send_message(
             chat_id=chat_id,
             text=messages.NO_START_ERROR
@@ -353,9 +363,9 @@ def clear(update, context):
             context.bot,
             chat_id
     ):
-        global bot_status
         global current_queue
-        if bot_status == 'active':
+        session = Session.get(pk=1)
+        if session.is_active is True:
             global queue_id_list
             global queue_counter
             global queue_message_id
@@ -369,7 +379,8 @@ def clear(update, context):
                 chat_id=chat_id,
                 text=messages.CLEAR
             )
-            bot_status = 'inactive'
+            session.is_active = False
+            session.save()
             context.bot.unpinChatMessage(
                 chat_id=chat_id,
                 message_id=queue_message_id
@@ -396,6 +407,7 @@ def error(update, context):
 
 
 def main():
+    db.create_tables([Session])
     updater = Updater(TOKEN, use_context=True)
     dispatcher = updater.dispatcher
     dispatcher.job_queue.run_repeating(upd, interval=1500)
