@@ -106,7 +106,7 @@ def on_start(update, context):
 
 def get_in_queue(update, context):
     chat_id = update.effective_chat.id
-    if Session.get(pk=1) is False:
+    if Session.get(id=1) is False:
         context.bot.send_message(
             chat_id=chat_id,
             text=messages.NO_START_ERROR
@@ -158,7 +158,7 @@ def get_in_queue(update, context):
 
 def change_position(update, context):
     chat_id = update.effective_chat.id
-    if Session.get(pk=1) is False:
+    if Session.get(id=1) is False:
         context.bot.send_message(
             chat_id=chat_id,
             text=messages.NO_START_ERROR
@@ -247,7 +247,7 @@ def change_position(update, context):
 
 def call_next(update, context):
     chat_id = update.effective_chat.id
-    if Session.get(pk=1) is False:
+    if Session.get(id=1) is False:
         context.bot.send_message(
             chat_id=chat_id,
             text=messages.NO_START_ERROR
@@ -301,7 +301,7 @@ def call_next(update, context):
 
 def button(update, context):
     chat_id = update.effective_chat.id
-    if Session.get(pk=1) is False:
+    if Session.get(id=1) is False:
         context.bot.send_message(
             chat_id=chat_id,
             text=messages.NO_START_ERROR
@@ -364,7 +364,7 @@ def clear(update, context):
             chat_id
     ):
         global current_queue
-        session = Session.get(pk=1)
+        session = Session.get(id=1)
         if session.is_active is True:
             global queue_id_list
             global queue_counter
